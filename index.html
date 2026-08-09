@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spice Garden — Luxury Dining Experience</title>
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script type="text/javascript">
+   (function(){
+      emailjs.init("YOUR_USER_ID"); // Replace with your EmailJS User ID
+   })();
+</script>
+</head>
+<body>
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+<div class="noise-overlay"></div>
+<canvas id="particleCanvas"></canvas>
+<div class="aurora-bg">
+<div class="aurora aurora-1"></div>
+<div class="aurora aurora-2"></div>
+<div class="aurora aurora-3"></div>
+</div>
+<div id="toast-container"></div>
+<div id="modal-container"></div>
+
+<!-- Voice Search Overlay -->
+<div id="voiceSearchOverlay" class="voice-overlay" style="display:none;">
+<div class="voice-content">
+<div class="voice-icon">🎤</div>
+<h3>Listening...</h3>
+<p>Say a dish name (e.g., "Butter Chicken")</p>
+<div class="voice-wave">
+<span></span><span></span><span></span><span></span><span></span>
+</div>
+<button onclick="stopVoiceSearch()" class="secondary-btn">Cancel</button>
+</div>
+</div>
+
+<!-- Customer Help Section -->
+<div class="customer-help">
+    <button class="help-toggle" onclick="toggleHelp()">🎧<span class="help-badge" id="helpBadge">!</span></button>
+    <div class="help-window" id="helpWindow" style="display:none;">
+        <div class="help-header">
+            <div class="help-avatar">🎧</div>
+            <div>
+                <h4>Customer Support</h4>
+                <p>We're here to help!</p>
+            </div>
+            <button class="help-close" onclick="toggleHelp()">×</button>
+        </div>
+        <div class="help-options">
+            <div class="help-option" onclick="openWhatsApp()">
+                <div class="help-icon whatsapp">💬</div>
+                <div class="help-info">
+                    <h5>WhatsApp</h5>
+                    <p>Chat with us instantly</p>
+                    <small>Response time: ~5 mins</small>
+                </div>
+            </div>
+            <div class="help-option" onclick="openEmail()">
+                <div class="help-icon email"></div>
+                <div class="help-info">
+                    <h5>Email</h5>
+                    <p>Send us a message</p>
+                    <small>Response time: ~2 hours</small>
+                </div>
+            </div>
+            <div class="help-option" onclick="openPhone()">
+                <div class="help-icon phone">📞</div>
+                <div class="help-info">
+                    <h5>Call Us</h5>
+                    <p>+91 8500545520</p>
+                    <small>Mon-Sat: 11AM-10PM</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button class="floating-cart magnetic" onclick="toggleCart()" id="floatingCart" style="display:none;">
+<span class="cart-icon">🛒</span>
+<span class="cart-count" id="floatingCartCount">0</span>
+<span class="cart-glow"></span>
+</button>
+<button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</button>
+
+<!-- PRELOADER -->
+<div id="preloader">
+<div class="preloader-aurora">
+<div class="pre-aurora pre-aurora-1"></div>
+<div class="pre-aurora pre-aurora-2"></div>
+<div class="pre-aurora pre-aurora-3"></div>
+</div>
+<div class="preloader-scene">
+<div class="luxury-plate">
+<div class="plate-outer-ring"></div>
+<div class="plate-middle-ring"></div>
+<div class="plate-inner-ring"></div>
+<div class="plate-core"><span class="plate-emoji">🍽️</span><div class="plate-shine"></div></div>
+</div>
+<div class="orbit-container">
+<div class="orbit-item" style="--i:0;">🍕</div>
+<div class="orbit-item" style="--i:1;">🍔</div>
+<div class="orbit-item" style="--i:2;">🌮</div>
+<div class="orbit-item" style="--i:3;">🍣</div>
+<div class="orbit-item" style="--i:4;">🍜</div>
+<div class="orbit-item" style="--i:5;">🍰</div>
+<div class="orbit-item" style="--i:6;">🥘</div>
+<div class="orbit-item" style="--i:7;">🍹</div>
+</div>
+<div class="preloader-brand">
+<div class="brand-line"></div>
+<h1 class="brand-name">
+<span class="brand-letter">S</span><span class="brand-letter">P</span><span class="brand-letter">I</span><span class="brand-letter">C</span><span class="brand-letter">E</span><span class="brand-space"> </span><span class="brand-letter">G</span><span class="brand-letter">A</span><span class="brand-letter">R</span><span class="brand-letter">D</span><span class="brand-letter">E</span><span class="brand-letter">N</span>
+</h1>
+<div class="brand-line"></div>
+<p class="brand-sub">LUXURY DINING EXPERIENCE</p>
+</div>
+<div class="luxury-loader"><div class="loader-progress"></div><div class="loader-glow"></div></div>
+</div>
+</div>
+
+<!-- HEADER -->
+<header class="glass-header">
+<div class="logo-area">
+<div class="logo-3d"><span class="logo-emoji">🍽️</span><div class="logo-glow"></div></div>
+<div class="logo-text"><h1>Spice Garden</h1><span class="tagline">Luxury Dining</span></div>
+</div>
+<div class="header-actions">
+<button class="theme-toggle magnetic" onclick="toggleTheme()"><span class="toggle-icon">🌙</span></button>
+<button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+</div>
+<nav id="mainNav">
+<a onclick="showPage('homePage'); toggleMobileMenu()"><span>Home</span></a>
+<a onclick="showPage('menuPage'); toggleMobileMenu()"><span>Menu</span></a>
+<a onclick="showPage('reservePage'); toggleMobileMenu()"><span>Reserve</span></a>
+<a onclick="showPage('galleryPage'); toggleMobileMenu()"><span>Gallery 📸</span></a>
+<a onclick="showPage('wishlistPage'); toggleMobileMenu()"><span>Wishlist</span></a>
+<a onclick="showPage('profilePage'); toggleMobileMenu()"><span>Profile 👤</span></a>
+<a onclick="toggleCart(); toggleMobileMenu()"><span>Cart (<span id="cartCount">0</span>)</span></a>
+</nav>
+</header>
+
+<!-- HOME PAGE -->
+<div class="page-section" id="homePage">
+<div class="hero-section">
+<div class="hero-depth-layers">
+<div class="depth-layer layer-back">
+<span class="float-food" style="--x:8%; --y:25%; --d:0s; --s:3rem;">🍕</span>
+<span class="float-food" style="--x:88%; --y:20%; --d:0.5s; --s:3.5rem;">🍔</span>
+<span class="float-food" style="--x:78%; --y:75%; --d:1s; --s:3rem;">🍣</span>
+<span class="float-food" style="--x:12%; --y:80%; --d:1.5s; --s:3.2rem;">🍜</span>
+</div>
+<div class="depth-layer layer-mid">
+<span class="float-food" style="--x:48%; --y:12%; --d:2s; --s:2.8rem;">🥘</span>
+<span class="float-food" style="--x:92%; --y:50%; --d:0.8s; --s:3rem;">🍰</span>
+<span class="float-food" style="--x:5%; --y:50%; --d:1.2s; --s:3.3rem;">🍹</span>
+</div>
+<div class="depth-layer layer-front">
+<span class="float-food" style="--x:38%; --y:88%; --d:0.3s; --s:2.9rem;">🌮</span>
+<span class="float-food" style="--x:65%; --y:35%; --d:1.8s; --s:3.1rem;">🍛</span>
+</div>
+</div>
+<div class="hero-content">
+<div class="hero-badge reveal-up"><span class="badge-dot"></span><span>PREMIUM DINING EXPERIENCE</span></div>
+<h1 class="hero-title reveal-up">
+<span class="title-line">Experience the</span>
+<span class="title-line"><span class="highlight-word">Flavors</span><span class="title-accent">of India</span></span>
+</h1>
+<p class="hero-subtitle reveal-up">Authentic spices, fresh ingredients, unforgettable taste</p>
+<div class="hero-buttons reveal-up">
+<button onclick="showPage('menuPage')" class="hero-btn primary magnetic"><span class="btn-text">View Menu</span><span class="btn-icon">🍽️</span><span class="btn-shine"></span></button>
+<button onclick="showPage('reservePage')" class="hero-btn secondary magnetic"><span class="btn-text">Book Table</span><span class="btn-icon">🪑</span><span class="btn-shine"></span></button>
+</div>
+<div class="hero-stats reveal-up">
+<div class="stat-card-3d magnetic"><div class="stat-number">500+</div><div class="stat-label">Happy Customers</div><div class="stat-glow"></div></div>
+<div class="stat-card-3d magnetic"><div class="stat-number">50+</div><div class="stat-label">Signature Dishes</div><div class="stat-glow"></div></div>
+<div class="stat-card-3d magnetic"><div class="stat-number">4.8★</div><div class="stat-label">Premium Rating</div><div class="stat-glow"></div></div>
+</div>
+</div>
+</div>
+
+<!-- Weather Recommendation -->
+<div class="container weather-recommendation reveal-up" id="weatherBanner" style="display:none;">
+<div class="weather-card">
+<div class="weather-icon" id="weatherIcon">☀️</div>
+<div class="weather-info">
+<h3 id="weatherTitle">Perfect Weather for...</h3>
+<p id="weatherDesc">Loading recommendations...</p>
+</div>
+<button onclick="showRecommendedDishes()" class="magnetic">View Dishes</button>
+</div>
+</div>
+
+<!-- PROMO CAROUSEL -->
+<div class="promo-carousel reveal-up">
+<div class="promo-track" id="promoTrack">
+<div class="promo-slide active">
+<div class="promo-content">
+<span class="promo-badge">🔥 LIMITED</span>
+<h3>Get 20% OFF</h3>
+<p>Use code <strong>MEGA20</strong> on orders above ₹1500</p>
+<button onclick="showPage('menuPage')" class="promo-btn">Order Now</button>
+</div>
+</div>
+<div class="promo-slide">
+<div class="promo-content">
+<span class="promo-badge">🎁 GIFT</span>
+<h3>Gift Vouchers</h3>
+<p>Send delicious gifts to your loved ones</p>
+<button onclick="showPage('vouchersPage')" class="promo-btn">Buy Voucher</button>
+</div>
+</div>
+<div class="promo-slide">
+<div class="promo-content">
+<span class="promo-badge">⭐ LOYALTY</span>
+<h3>Earn Rewards</h3>
+<p>Get 1 point per ₹100 spent. Redeem for discounts!</p>
+<button onclick="showPage('profilePage')" class="promo-btn">View Profile</button>
+</div>
+</div>
+<div class="promo-slide">
+<div class="promo-content">
+<span class="promo-badge">🚀 FAST</span>
+<h3>30-Min Delivery</h3>
+<p>Hot & fresh food at your doorstep</p>
+<button onclick="showPage('menuPage')" class="promo-btn">Order Now</button>
+</div>
+</div>
+</div>
+<div class="promo-dots" id="promoDots"></div>
+</div>
+
+<!-- CHEFS -->
+<div class="container chefs-section">
+<h2 class="section-title reveal-up"><span class="title-text">Meet Our Master Chefs</span><span class="title-deco">👨‍🍳</span></h2>
+<div class="chefs-grid" id="chefsGrid"></div>
+</div>
+
+<!-- Today's Special -->
+<div class="container special-section">
+<h2 class="section-title reveal-up"><span class="title-text">Today's Special</span><span class="title-deco">⭐</span></h2>
+<div class="special-card reveal-up" id="todaySpecial"></div>
+</div>
+
+<!-- FEATURES -->
+<div class="container features-section">
+<h2 class="section-title reveal-up"><span class="title-text">Why Choose Spice Garden?</span></h2>
+<div class="features-grid">
+<div class="feature-card card-3d-hover reveal-up"><div class="card-border-glow"></div><div class="feature-icon">🚀</div><h3>Fast Delivery</h3><p>30-minute delivery guarantee</p><div class="card-shine"></div></div>
+<div class="feature-card card-3d-hover reveal-up"><div class="card-border-glow"></div><div class="feature-icon">📍</div><h3>Live Location</h3><p>GPS-based accurate delivery</p><div class="card-shine"></div></div>
+<div class="feature-card card-3d-hover reveal-up"><div class="card-border-glow"></div><div class="feature-icon">🎤</div><h3>Voice Search</h3><p>Order by voice command</p><div class="card-shine"></div></div>
+<div class="feature-card card-3d-hover reveal-up"><div class="card-border-glow"></div><div class="feature-icon">💬</div><h3>Live Chat</h3><p>24/7 customer support</p><div class="card-shine"></div></div>
+</div>
+</div>
+
+<!-- Reviews -->
+<div class="container reviews-section">
+<h2 class="section-title reveal-up"><span class="title-text">What Our Customers Say</span><span class="title-deco">💬</span></h2>
+<div class="reviews-grid" id="reviewsGrid"></div>
+</div>
+
+<!-- FAQ -->
+<div class="container faq-section">
+<h2 class="section-title reveal-up"><span class="title-text">Frequently Asked Questions</span><span class="title-deco">❓</span></h2>
+<div class="faq-list" id="faqList"></div>
+</div>
+</div>
+
+<!-- MENU PAGE -->
+<div class="page-section" id="menuPage" style="display:none;">
+<div class="container">
+<h2 class="section-title reveal-up"><span class="title-text">Our Menu</span></h2>
+
+<!-- Advanced Filters -->
+<div class="advanced-filters reveal-up">
+<div class="filter-row">
+<input id="menuSearch" type="text" placeholder="🔍 Search dishes..." oninput="loadMenu()">
+<button onclick="startVoiceSearch()" class="voice-search-btn magnetic" title="Voice Search">🎤</button>
+</div>
+<div class="filter-row">
+<label>🥗 Dietary:</label>
+<select id="dietaryFilter" onchange="loadMenu()">
+<option value="all">All Items</option>
+<option value="vegan">🌱 Vegan</option>
+<option value="gluten-free">🌾 Gluten-Free</option>
+<option value="nut-free">🥜 Nut-Free</option>
+<option value="jain">🕉️ Jain</option>
+<option value="low-calorie">🔥 Low Calorie</option>
+</select>
+<label>🌶️ Spice Level:</label>
+<select id="spiceFilter" onchange="loadMenu()">
+<option value="all">Any Spice</option>
+<option value="mild">🟢 Mild</option>
+<option value="medium">🟡 Medium</option>
+<option value="hot">🔴 Hot</option>
+</select>
+</div>
+<div class="filter-row">
+<label>💰 Price:</label>
+<select id="priceFilter" onchange="loadMenu()">
+<option value="all">All</option>
+<option value="low">Under ₹200</option>
+<option value="mid">₹200 - ₹300</option>
+<option value="high">Above ₹300</option>
+</select>
+<label>📊 Sort:</label>
+<select id="sortFilter" onchange="loadMenu()">
+<option value="default">Default</option>
+<option value="price-low">Price: Low to High</option>
+<option value="price-high">Price: High to Low</option>
+<option value="name">Name (A-Z)</option>
+</select>
+<button onclick="resetFilters()" class="secondary-btn magnetic">Reset</button>
+</div>
+</div>
+
+<div class="category-tabs">
+    <button class="tab-btn active magnetic" onclick="filterCategory('all')">All Items</button>
+    <button class="tab-btn magnetic" onclick="filterCategory('veg')">🥬 Veg</button>
+    <button class="tab-btn magnetic" onclick="filterCategory('nonveg')">🍗 Non-Veg</button>
+    <button class="tab-btn magnetic" onclick="filterCategory('pizza')">🍕 Pizza</button>
+    <button class="tab-btn magnetic" onclick="filterCategory('burger')">🍔 Burger</button>
+    <button class="tab-btn magnetic" onclick="filterCategory('sandwich')">🥪 Sandwich</button>
+    <button class="tab-btn magnetic" onclick="filterCategory('roll')">🌯 Rolls</button>
+    <button class="tab-btn magnetic" onclick="filterCategory('icecream')">🍦 Ice Cream</button>
+    <button class="tab-btn magnetic" onclick="filterCategory('juice')">🥤 Juices</button>
+</div>
+
+<div id="menu" class="menu-grid"></div>
+</div>
+</div>
+
+<!-- RESERVATION PAGE -->
+<div class="page-section" id="reservePage" style="display:none;">
+<div class="container">
+<h2 class="section-title reveal-up"><span class="title-text">Table Reservation</span></h2>
+
+<div class="seating-chart reveal-up">
+<h3 class="section-subtitle">🪑 Live Table Availability</h3>
+<div class="tables-grid" id="tablesGrid"></div>
+</div>
+
+<div class="card form-card reveal-up" style="max-width:600px; margin:auto;">
+<input type="text" id="resName" placeholder="Full Name *">
+<input type="tel" id="resPhone" placeholder="10-Digit Phone *" maxlength="10">
+<input type="email" id="resEmail" placeholder="Email *">
+<input type="date" id="resDate">
+<label style="font-weight:700; margin-top:10px; display:block;">Select Time Slot:</label>
+<div id="slots" style="display:flex; flex-wrap:wrap; gap:8px; margin:8px 0;"></div>
+<input type="hidden" id="resTime">
+<input type="number" id="resGuests" min="1" max="8" value="2" placeholder="Number of guests">
+
+<div style="margin-top:8px; padding:10px; background:rgba(255, 107, 53, 0.08); border:1px solid rgba(255, 107, 53, 0.2); border-radius:8px; font-size:0.85rem; color:var(--accent);">
+    ⚠️ <strong>Note:</strong> Each table accommodates a maximum of <strong>8 guests</strong>. For larger groups, please contact us directly.
+</div>
+<textarea id="resNotes" placeholder="Special requests (optional)..." rows="2"></textarea>
+<button onclick="submitBooking()" class="magnetic" style="width:100%; margin-top:10px;">Submit Booking</button>
+<p id="resMsg" style="margin-top:10px; font-weight:bold;"></p>
+</div>
+
+<div class="my-bookings-section reveal-up" style="margin-top:40px;">
+
+
+</div>
+<div id="myBookingsResult"></div>
+</div>
+</div>
+</div>
+
+<!-- PROFILE PAGE - WITH LOGIN/REGISTER -->
+<div class="page-section" id="profilePage" style="display:none;">
+<div class="container">
+<h2 class="section-title reveal-up"><span class="title-text">My Profile</span><span class="title-deco">👤</span></h2>
+
+<!-- AUTH SECTION -->
+<div id="authSection" class="auth-section reveal-up">
+<div class="auth-tabs">
+<button class="auth-tab active" onclick="switchAuthTab('login', this)">Login</button>
+<button class="auth-tab" onclick="switchAuthTab('register', this)">Register</button>
+</div>
+
+<!-- Login Form -->
+<div id="loginForm" class="auth-form">
+<div class="auth-icon">🔐</div>
+<h3>Welcome Back!</h3>
+<p class="auth-subtitle">Login to access your profile & rewards</p>
+<input type="email" id="loginEmail" placeholder="Email Address *">
+<input type="password" id="loginPassword" placeholder="Password *">
+<a class="forgot-password-link" onclick="showForgotPasswordModal()">Forgot Password?</a>
+<button onclick="loginUser()" class="magnetic auth-btn">Login</button>
+<p class="auth-footer">Don't have an account? <a onclick="switchAuthTab('register', document.querySelectorAll('.auth-tab')[1])" style="color:var(--accent); cursor:pointer; font-weight:700;">Register Now</a></p>
+</div>
+
+<!-- Register Form -->
+<div id="registerForm" class="auth-form" style="display:none;">
+<div class="auth-icon">✨</div>
+<h3>Create Account</h3>
+<p class="auth-subtitle">Join Spice Garden & earn rewards!</p>
+<input type="text" id="regName" placeholder="Full Name *">
+<input type="email" id="regEmail" placeholder="Email Address *">
+<input type="tel" id="regPhone" placeholder="10-Digit Phone *">
+<input type="date" id="regDob" placeholder="Date of Birth *" title="Required for password recovery">
+<input type="password" id="regPassword" placeholder="Password (min 6 chars) *">
+<div class="password-strength" id="passwordStrength">
+    <div class="strength-bar"></div>
+    <span class="strength-text">Password Strength</span>
+</div>
+<input type="password" id="regConfirmPassword" placeholder="Confirm Password *">
+<button onclick="registerUser()" class="magnetic auth-btn">Create Account</button>
+<p class="auth-footer">Already have an account? <a onclick="switchAuthTab('login', document.querySelectorAll('.auth-tab')[0])" style="color:var(--accent); cursor:pointer; font-weight:700;">Login</a></p>
+</div>
+</div>
+
+<!-- LOGGED IN PROFILE -->
+<div id="profileContent" style="display:none;">
+<div class="user-header reveal-up">
+<div class="user-avatar" id="userAvatar">👤</div>
+<div class="user-info">
+<h3 id="userName">User Name</h3>
+<p id="userEmail">user@email.com</p>
+<p id="userPhone">📞 0000000000</p>
+</div>
+<button onclick="logoutUser()" class="logout-btn magnetic">🚪 Logout</button>
+</div>
+
+<!-- Change Password Section -->
+<div class="profile-section reveal-up">
+<h3 class="section-subtitle">🔒 Security</h3>
+<input type="password" id="currentPassword" placeholder="Current Password *">
+<input type="password" id="newPassword" placeholder="New Password *">
+<input type="password" id="confirmNewPassword" placeholder="Confirm New Password *">
+<button onclick="changePassword()" class="magnetic" style="width:100%; margin-top:10px;">Update Password</button>
+</div>
+
+<div class="loyalty-tier-card reveal-up" id="loyaltyTierCard">
+<div class="tier-header">
+<div class="tier-icon" id="tierIcon">🥉</div>
+<div class="tier-info">
+<h3 id="tierName">Bronze Member</h3>
+<p id="tierPoints">0 Loyalty Points</p>
+</div>
+<div class="tier-badge" id="tierBadge">BRONZE</div>
+</div>
+<div class="tier-progress">
+<div class="tier-progress-bar" id="tierProgressBar" style="width: 0%;"></div>
+</div>
+<p class="tier-next" id="tierNext">Earn 500 more points to reach Silver tier!</p>
+</div>
+
+<div class="profile-stats reveal-up">
+<div class="profile-stat">
+<div class="stat-icon">📦</div>
+<div class="stat-value" id="profileOrders">0</div>
+<div class="stat-label">Total Orders</div>
+</div>
+<div class="profile-stat">
+<div class="stat-icon">💰</div>
+<div class="stat-value" id="profileSpent">₹0</div>
+<div class="stat-label">Total Spent</div>
+</div>
+<div class="profile-stat">
+<div class="stat-icon">🎁</div>
+<div class="stat-value" id="profilePoints">0</div>
+<div class="stat-label">Loyalty Points</div>
+</div>
+<div class="profile-stat">
+<div class="stat-icon">🪑</div>
+<div class="stat-value" id="profileBookings">0</div>
+<div class="stat-label">Bookings</div>
+</div>
+</div>
+
+<div class="profile-section reveal-up">
+<h3 class="section-subtitle">📦 My Order History</h3>
+<div id="profileOrdersList"></div>
+</div>
+
+<div class="profile-section reveal-up">
+<h3 class="section-subtitle">🪑 My Bookings</h3>
+<div id="profileBookingsList"></div>
+</div>
+
+<div class="profile-section reveal-up">
+<h3 class="section-subtitle">🎁 Redeem Points</h3>
+<div class="redeem-options">
+<div class="redeem-card">
+<div class="redeem-icon">🎫</div>
+<h4>₹50 Off</h4>
+<p>500 points</p>
+<button onclick="redeemPoints(500, 50)" class="magnetic">Redeem</button>
+</div>
+<div class="redeem-card">
+<div class="redeem-icon">🎁</div>
+<h4>₹100 Off</h4>
+<p>1000 points</p>
+<button onclick="redeemPoints(1000, 100)" class="magnetic">Redeem</button>
+</div>
+<div class="redeem-card">
+<div class="redeem-icon">👑</div>
+<h4>₹200 Off</h4>
+<p>2000 points</p>
+<button onclick="redeemPoints(2000, 200)" class="magnetic">Redeem</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- GALLERY PAGE -->
+<div class="page-section" id="galleryPage" style="display:none;">
+<div class="container">
+<h2 class="section-title reveal-up"><span class="title-text">Food Gallery</span><span class="title-deco">📸</span></h2>
+<div class="gallery-grid" id="galleryGrid"></div>
+</div>
+</div>
+
+<!-- VOUCHERS PAGE -->
+<div class="page-section" id="vouchersPage" style="display:none;">
+<div class="container">
+<h2 class="section-title reveal-up"><span class="title-text">Gift Vouchers</span><span class="title-deco">🎁</span></h2>
+<div class="voucher-grid">
+<div class="voucher-card reveal-up">
+<div class="voucher-amount">₹500</div>
+<div class="voucher-desc">Perfect for a meal for two</div>
+<button onclick="buyVoucher(500)" class="magnetic">Buy Now</button>
+</div>
+<div class="voucher-card reveal-up">
+<div class="voucher-amount">₹1000</div>
+<div class="voucher-desc">Family dining experience</div>
+<button onclick="buyVoucher(1000)" class="magnetic">Buy Now</button>
+</div>
+<div class="voucher-card reveal-up">
+<div class="voucher-amount">₹2000</div>
+<div class="voucher-desc">Premium celebration</div>
+<button onclick="buyVoucher(2000)" class="magnetic">Buy Now</button>
+</div>
+<div class="voucher-card reveal-up">
+<div class="voucher-amount">₹5000</div>
+<div class="voucher-desc">Ultimate luxury feast</div>
+<button onclick="buyVoucher(5000)" class="magnetic">Buy Now</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- WISHLIST PAGE -->
+<div class="page-section" id="wishlistPage" style="display:none;">
+<div class="container">
+<h2 class="section-title reveal-up"><span class="title-text">Your Wishlist ❤️</span></h2>
+<div id="wishlistGrid" class="menu-grid"></div>
+</div>
+</div>
+
+<!-- CART SIDEBAR -->
+<div id="cartSidebar" class="cart">
+<h2>Your Order 🛒 <button onclick="toggleCart()" class="close-cart-btn">&times;</button></h2>
+<div id="cartItems">Cart Empty</div>
+
+<div class="schedule-section" id="scheduleSection">
+<label style="font-weight:700; display:block; margin-bottom:8px;">📅 Delivery Time:</label>
+<select id="deliveryTimeOption" onchange="handleDeliveryTimeChange()">
+<option value="now">Deliver Now (30 min)</option>
+<option value="schedule">Schedule for Later</option>
+</select>
+<div id="scheduleDateTime" style="display:none; margin-top:10px;">
+<input type="date" id="scheduleDate" min="" style="margin:5px 0;">
+<input type="time" id="scheduleTime" style="margin:5px 0;">
+</div>
+</div>
+
+<div class="coupon-section">
+<input type="text" id="couponCode" placeholder="Coupon Code (e.g., ANY10, MEGA20)">
+<button onclick="applyCoupon()" class="secondary-btn magnetic" style="width:100%; margin-top:5px;">Apply</button>
+<p id="couponMsg" style="font-size:0.85rem; margin-top:5px;"></p>
+</div>
+
+<div class="loyalty-section" id="loyaltySection" style="display:none;">
+<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; font-size:0.9rem;">
+<input type="checkbox" id="redeemLoyaltyCheck" onchange="toggleLoyaltyRedemption()">
+🎁 Redeem Loyalty Points (<span id="availableLoyaltyPoints">0</span> pts = ₹<span id="loyaltyDiscountValue">0</span> off)
+</label>
+</div>
+
+<div class="cart-totals">
+<p>Subtotal: ₹<span id="cartSubtotal">0</span></p>
+<p id="discountRow" style="color:#2ecc71; display:none;">Coupon Discount: -₹<span id="cartDiscount">0</span></p>
+<p id="loyaltyRow" style="color:#9b59b6; display:none;">Loyalty Discount: -₹<span id="cartLoyaltyDiscount">0</span></p>
+<p>GST (18%): ₹<span id="cartGst">0</span></p>
+<p>Delivery: ₹<span id="deliveryFee">40</span></p>
+<p class="grand-total">Total: ₹<span id="cartTotal">0</span></p>
+<p style="font-size:0.8rem; color:var(--text-secondary); margin-top:5px;">🎁 You'll earn <span id="loyaltyPointsEarned">0</span> new loyalty points!</p>
+</div>
+<hr>
+<input type="text" id="custName" placeholder="Your Name *">
+<input type="email" id="custEmail" placeholder="Email *">
+<input type="tel" id="custPhone" placeholder="10-Digit Phone *" maxlength="10">
+
+<div class="live-location-section">
+<label style="font-weight:700; display:block; margin-bottom:8px;">📍 Delivery Address</label>
+<button onclick="getLiveLocation()" class="location-btn magnetic" id="getLocationBtn">📍 Get My Live Location</button>
+<div id="locationStatus" style="font-size:0.85rem; margin-top:8px; color:var(--text-secondary);"></div>
+<div id="detectedAddressBox" style="display:none; margin-top:12px; padding:15px; background:linear-gradient(135deg, #e8f5e9, #c8e6c9); border-radius:12px; border:2px solid #4caf50;">
+<div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">
+<strong style="color:#2e7d32;">✅ Location Detected</strong>
+<button onclick="clearLocation()" style="background:transparent; color:#c62828; padding:2px 8px; font-size:0.8rem; box-shadow:none;">✕ Change</button>
+</div>
+<p id="detectedAddressText" style="font-size:0.9rem; color:#1b5e20; line-height:1.5;"></p>
+<div id="locationMiniMap" style="width:100%; height:150px; border-radius:8px; margin-top:10px;"></div>
+<input type="hidden" id="custLat"><input type="hidden" id="custLng"><input type="hidden" id="custAddress">
+</div>
+<textarea id="manualAddress" placeholder="Or type address manually..." rows="2" style="margin-top:10px; display:none;"></textarea>
+</div>
+<!-- 🆕 ADDRESS SEARCH BAR -->
+<div style="margin-top: 15px; display: flex; gap: 10px;">
+    <input type="text" id="addressSearchInput" placeholder="Search & update new address..." style="flex: 1; margin: 0; padding: 10px; font-size: 0.9rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+    <button onclick="searchAddress()" style="padding: 10px 15px; font-size: 0.9rem; white-space: nowrap; border-radius: 8px;">🔍 Search</button>
+</div>
+
+<!-- 🆕 SEND LOCATION TO ADMIN BUTTON -->
+<button onclick="sendLocationToAdmin()" style="width: 100%; margin-top: 12px; background: linear-gradient(135deg, #25d366, #128c7e); color: white; padding: 12px; border-radius: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; cursor: pointer; box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);">
+    📲 Send Exact Location to Admin
+</button>
+
+<label style="font-weight:700; margin-top:10px; display:block;">Payment Method:</label>
+<select id="paymentMethod">
+<option value="cod">Cash on Delivery</option>
+<option value="card">Credit/Debit Card</option>
+<option value="upi">UPI</option>
+</select>
+<textarea id="specialInstructions" placeholder="Special Instructions..." rows="3"></textarea>
+
+<div id="upiQRSection" style="display:none; margin-top:15px; padding:20px; background:linear-gradient(135deg, #fff3e0, #ffe0b2); border-radius:15px; text-align:center; border:2px dashed var(--accent);">
+<h3 style="color:var(--accent); margin-bottom:10px;">📱 Scan to Pay via UPI</h3>
+<div id="upiQRCode" style="background:white; padding:15px; border-radius:12px; display:inline-block; margin:10px 0;"></div>
+<p style="font-size:0.9rem; color:var(--text-secondary); margin:10px 0;">
+<strong>UPI ID:</strong> <span id="upiIdDisplay">spicegarden@upi</span><br>
+<strong>Amount:</strong> <span style="color:var(--accent); font-weight:700; font-size:1.2rem;">₹<span id="upiAmount">0</span></span>
+</p>
+<button onclick="openPaymentConfirmation()" class="magnetic" style="width:100%; background:#27ae60; margin-top:10px;">✅ I've Completed Payment</button>
+</div>
+<button onclick="placeOrder()" class="magnetic" style="width:100%; margin-top:10px;">Place Order</button>
+</div>
+
+<script src="script.js"></script>
+<script>
+// Particle Canvas
+const canvas = document.getElementById('particleCanvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+class Particle {
+constructor() { this.reset(); }
+reset() {
+this.x = Math.random() * canvas.width;
+this.y = Math.random() * canvas.height;
+this.size = Math.random() * 2 + 0.5;
+this.speedX = (Math.random() - 0.5) * 0.3;
+this.speedY = (Math.random() - 0.5) * 0.3;
+this.opacity = Math.random() * 0.5 + 0.2;
+this.hue = Math.random() * 30 + 20;
+}
+update() {
+this.x += this.speedX;
+this.y += this.speedY;
+if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+}
+draw() {
+ctx.beginPath();
+ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+ctx.fillStyle = `hsla(${this.hue}, 90%, 60%, ${this.opacity})`;
+ctx.shadowBlur = 10;
+ctx.shadowColor = `hsla(${this.hue}, 90%, 60%, ${this.opacity})`;
+ctx.fill();
+}
+}
+for (let i = 0; i < 70; i++) particles.push(new Particle());
+function animateParticles() {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+particles.forEach(p => { p.update(); p.draw(); });
+particles.forEach((p1, i) => {
+particles.slice(i + 1).forEach(p2 => {
+const dx = p1.x - p2.x;
+const dy = p1.y - p2.y;
+const dist = Math.sqrt(dx * dx + dy * dy);
+if (dist < 110) {
+ctx.beginPath();
+ctx.moveTo(p1.x, p1.y);
+ctx.lineTo(p2.x, p2.y);
+ctx.strokeStyle = `hsla(30, 90%, 60%, ${(1 - dist / 110) * 0.15})`;
+ctx.lineWidth = 0.5;
+ctx.stroke();
+}
+});
+});
+requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// Custom Cursor
+const cursorDot = document.querySelector('.cursor-dot');
+const cursorRing = document.querySelector('.cursor-ring');
+if (window.matchMedia('(pointer: fine)').matches) {
+document.addEventListener('mousemove', (e) => {
+cursorDot.style.left = e.clientX + 'px';
+cursorDot.style.top = e.clientY + 'px';
+cursorRing.style.left = e.clientX + 'px';
+cursorRing.style.top = e.clientY + 'px';
+});
+document.querySelectorAll('a, button, .magnetic').forEach(el => {
+el.addEventListener('mouseenter', () => {
+cursorRing.style.transform = 'translate(-50%, -50%) scale(1.5)';
+cursorRing.style.borderColor = 'var(--accent)';
+});
+el.addEventListener('mouseleave', () => {
+cursorRing.style.transform = 'translate(-50%, -50%) scale(1)';
+cursorRing.style.borderColor = 'rgba(255,255,255,0.5)';
+});
+});
+} else {
+cursorDot.style.display = 'none';
+cursorRing.style.display = 'none';
+}
+
+// 3D Card Tilt
+document.querySelectorAll('.card-3d-hover').forEach(card => {
+card.addEventListener('mousemove', (e) => {
+const rect = card.getBoundingClientRect();
+const x = e.clientX - rect.left;
+const y = e.clientY - rect.top;
+const centerX = rect.width / 2;
+const centerY = rect.height / 2;
+const rotateX = (y - centerY) / 10;
+const rotateY = (centerX - x) / 10;
+card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
+});
+card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+});
+
+// Magnetic Buttons
+document.querySelectorAll('.magnetic').forEach(btn => {
+btn.addEventListener('mousemove', (e) => {
+const rect = btn.getBoundingClientRect();
+const x = e.clientX - rect.left - rect.width / 2;
+const y = e.clientY - rect.top - rect.height / 2;
+btn.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px)`;
+});
+btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
+});
+
+// Scroll Reveal
+const observer = new IntersectionObserver((entries) => {
+entries.forEach(entry => {
+if (entry.isIntersecting) entry.target.classList.add('revealed');
+});
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal-up').forEach(el => observer.observe(el));
+</script>
+ </div>
+
+<!-- 🆕 DINE-IN QR CODE SECTION -->
+<section id="dineInPage" class="page-section" style="display:none;">
+    <div class="container">
+        <h2 class="section-title">
+            <span class="title-text">📱 Dine-In QR Ordering</span>
+        </h2>
+        <div class="dinein-card">
+            <div class="dinein-header">
+                <div class="dinein-icon">🍽️</div>
+                <div>
+                    <h3>Welcome to Table <span id="dineInTableNum" style="color:var(--accent);">#--</span></h3>
+                    <p>Scan QR at your table to order directly from your phone!</p>
+                </div>
+            </div>
+            <div id="dineInNotice" class="dinein-notice">
+                ✅ You're ordering for <strong>Dine-In</strong> • No delivery charges • Food served at your table
+            </div>
+            <button onclick="showPage('menuPage')" class="hero-btn primary" style="width:100%; margin-top:20px;">
+                <span class="btn-text">🍽️ View Menu & Order</span>
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- 🆕 PWA Install Prompt -->
+<div id="pwaInstallPrompt" class="pwa-prompt" style="display:none;">
+    <div class="pwa-prompt-content">
+        <div class="pwa-icon">📲</div>
+        <div class="pwa-info">
+            <h4>Install Spice Garden App</h4>
+            <p>Get faster access & offline support</p>
+        </div>
+        <button onclick="installPWA()" class="pwa-install-btn">Install</button>
+        <button onclick="dismissPWA()" class="pwa-dismiss-btn">×</button>
+    </div>
+</div>
+
+ <!-- MENU IKADA KANIPISTUNDI -->
+ <h2 style="text-align:center; color:white;">Spice Menu</h2>
+ <div id="menu" style="padding:20px; color:white;"></div>
+
+ <script>
+    fetch('http://localhost:3000/api/spices')
+     .then(res => res.json())
+    .then(data => {
+       console.log("Backend Data:", data);
+         const menuDiv = document.getElementById('menu');
+    data.forEach(item => {
+            menuDiv.innerHTML += `
+                 <div style="border:1px solid white; margin:10px; padding:10px;">
+                   <h3>${item.name}</h3>
+                    <p>Price: Rs.${item.price}</p>
+                 <p>Stock: ${item.stock}</p>
+                </div>
+            `;
+       });
+    })
+    .catch(err => console.log("Server off unda?", err));
+ </script>
+
+
+</body>
+</html>

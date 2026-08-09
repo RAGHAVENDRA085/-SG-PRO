@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - 3D</title>
+    <link rel="stylesheet" href="admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="script.js" defer></script>
+    <meta name="theme-color" content="#667eea">
+
+    <!-- Favicon (Emoji fallback) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+
+    <!-- Google Fonts (Poppins, Orbitron) -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS & JS (Required for Live Delivery Map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- QRCode.js (Required for generating Table QR Codes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+    
+    <!-- Login Gate -->
+    <div id="adminLoginGate" class="admin-login-gate">
+        <div class="gradient-mesh">
+            <div class="mesh-blob blob-1"></div>
+            <div class="mesh-blob blob-2"></div>
+            <div class="mesh-blob blob-3"></div>
+            <div class="mesh-blob blob-4"></div>
+        </div>
+        <div class="login-card-wrapper">
+            <div class="login-card">
+                <div class="card-glow"></div>
+                <div class="holo-shine"></div>
+                <div class="card-content">
+                    <div class="icon-container">
+                        <div class="icon-3d">
+                            <div class="icon-ring"></div>
+                            <div class="icon-ring"></div>
+                            <div class="icon-core">🔐</div>
+                        </div>
+                    </div>
+                    <h2>ADMIN ACCESS</h2>
+                    <p class="card-subtitle">Secure Access • Enter code to continue</p>
+                    <div class="input-wrapper">
+                        <input type="password" id="adminCodeInput" placeholder="••••" maxlength="4" autocomplete="off">
+                        <div class="input-glow"></div>
+                    </div>
+                    <button type="button" id="unlockBtn" class="unlock-btn">
+                        <div class="btn-bg"></div>
+                        <div class="btn-content">
+                            <span>Unlock</span>
+                            <span class="btn-arrow">→</span>
+                        </div>
+                    </button>
+                    <a href="index.html" class="back-link">← Back to Site</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" style="display:none;">
+        <header class="admin-header glass">
+            <div class="admin-logo">
+                <div class="logo-3d-container">
+                    <div class="logo-core">⚡</div>
+                    <div class="logo-ring ring-1"></div>
+                    <div class="logo-ring ring-2"></div>
+                    <div class="logo-ring ring-3"></div>
+                    <div class="logo-glow"></div>
+                </div>
+                <div>
+                    <h1>ADMIN <span class="logo-accent">DASHBOARD</span></h1>
+                    <p class="admin-tagline">CONTROL CENTER</p>
+                </div>
+            </div>
+            <div class="admin-header-actions">
+                <a href="index.html" class="admin-site-link">🌐 View Site</a>
+                <button id="logoutBtn" class="admin-logout-btn">Logout</button>
+            </div>
+        </header>
+
+        <div class="admin-container">
+            <!-- Stats Cards -->
+            <div class="admin-stats">
+                <div class="stat-card glass card-3d-hover holo-card stat-sales">
+                    <div class="stat-header">
+                        <div class="stat-info">
+                            <h3>Today's Sales</h3>
+                            <h1 id="todaySales">₹0</h1>
+                            <p class="stat-trend">📈 Live</p>
+                        </div>
+                        <div class="stat-icon-3d">💰</div>
+                    </div>
+                </div>
+                <div class="stat-card glass card-3d-hover holo-card stat-month">
+                    <div class="stat-header">
+                        <div class="stat-info">
+                            <h3>Monthly Sales</h3>
+                            <h1 id="monthSales">₹0</h1>
+                            <p class="stat-trend">📊 Month</p>
+                        </div>
+                        <div class="stat-icon-3d">📅</div>
+                    </div>
+                </div>
+                <div class="stat-card glass card-3d-hover holo-card stat-orders">
+                    <div class="stat-header">
+                        <div class="stat-info">
+                            <h3>Total Orders</h3>
+                            <h1 id="totalOrders">0</h1>
+                            <p class="stat-trend">📦 All Time</p>
+                        </div>
+                        <div class="stat-icon-3d">📦</div>
+                    </div>
+                </div>
+                <div class="stat-card glass card-3d-hover holo-card stat-bookings">
+                    <div class="stat-header">
+                        <div class="stat-info">
+                            <h3>Total Bookings</h3>
+                            <h1 id="totalBookings">0</h1>
+                            <p class="stat-trend">🎫 Reserved</p>
+                        </div>
+                        <div class="stat-icon-3d">🪑</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="admin-quick-actions">
+                <button id="exportOrdersBtn" class="action-btn export-btn btn-3d">📥 Export Orders</button>
+                <button id="exportBookingsBtn" class="action-btn export-btn btn-3d">📥 Export Bookings</button>
+                <button id="refreshBtn" class="action-btn refresh-btn btn-3d">🔄 Refresh</button>
+                <button id="clearBtn" class="action-btn danger-btn btn-3d">🗑️ Clear All</button>
+            </div>
+
+            <!-- Live Table Status -->
+            <div class="admin-section glass">
+                <div class="section-header">
+                    <h3>🪑 Live Table Status (Today)</h3>
+                    <span class="section-badge">Today</span>
+                </div>
+                <div id="adminTablesGrid" class="tables-grid"></div>
+            </div>
+
+            <!-- Delivery Map -->
+            <div class="admin-section glass">
+                <div class="section-header">
+                    <h3>🗺️ Live Delivery Map</h3>
+                    <span class="section-badge" id="mapOrderCount">0 orders</span>
+                </div>
+                <div id="deliveryMap" class="admin-map"></div>
+            </div>
+
+            <!-- Sales Chart -->
+            <div class="admin-section glass">
+                <div class="section-header">
+                    <h3>📊 Sales Analytics (Last 7 Days)</h3>
+                    <span class="section-badge">Analytics</span>
+                </div>
+                <div id="salesChart" class="chart-container"></div>
+            </div>
+
+            <!-- Advanced Analytics -->
+            <div class="admin-section glass">
+                <div class="section-header">
+                    <h3>📊 Advanced Analytics</h3>
+                    <span class="section-badge">Smart Insights</span>
+                </div>
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h4>⏰ Peak Hours (Last 7 Days)</h4>
+                        <div id="peakHoursChart" class="peak-hours-chart"></div>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>🏆 Top 5 Best Sellers</h4>
+                        <div id="bestSellersList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🆕 RATINGS & REVIEWS SECTION -->
+            <div class="admin-section glass">
+                <div class="section-header">
+                    <h3>⭐ Ratings & Reviews</h3>
+                    <span class="section-badge" id="ratingsCount">0 reviews</span>
+                </div>
+                <div class="ratings-summary" id="ratingsSummary"></div>
+                <div class="reviews-list" id="reviewsList"></div>
+            </div>
+
+            <!-- Menu Management -->
+            <div class="admin-section glass">
+                <div class="section-header">
+                    <h3>🍽️ Menu Management</h3>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button onclick="openAddItemModal()" class="action-btn refresh-btn btn-3d">+ Add New</button>
+                        <button onclick="restoreAllDeleted()" class="action-btn export-btn btn-3d">🔄 Restore Deleted</button>
+                        <button onclick="resetAllOverrides()" class="action-btn danger-btn btn-3d">⚠️ Reset Edits</button>
+                    </div>
+                </div>
+                
+                <div class="admin-filters">
+                    <select id="menuCategoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="veg">🥬 Veg</option>
+                        <option value="nonveg">🍗 Non-Veg</option>
+                        <option value="pizza">🍕 Pizza</option>
+                        <option value="burger">🍔 Burger</option>
+                        <option value="sandwich">🥪 Sandwich</option>
+                        <option value="roll">🌯 Roll</option>
+                        <option value="icecream">🍦 Ice Cream</option>
+                        <option value="juice">🥤 Juice</option>
+                    </select>
+                    <input type="text" id="menuSearchAdmin" placeholder="🔍 Search menu items...">
+                </div>
+                <div id="menuManagementGrid" class="menu-management-grid"></div>
+            </div>
+
+             <!-- ================= 🆕 TABLE PRICING MANAGEMENT ================= -->
+  
+<section class="admin-section glass holo-card">
+    <div class="section-header">
+        <h3>💰 Table Pricing Management</h3>
+        
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <
+        </div>
+    </div>
+    
+    <div id="tablePricingGrid" class="menu-management-grid"></div>
+</section>
+                
+                <div id="tablePricingGrid" class="menu-management-grid"></div>
+            </section>
+
+            <!-- Orders Management -->
+            <div class="admin-section glass">
+                <div class="section-header">
+                    <h3>📋 Orders Management</h3>
+                    <span class="section-badge" id="ordersCount">0 orders</span>
+                </div>
+                <div class="admin-filters">
+                    <select id="orderStatusFilter">
+                        <option value="all">All Statuses</option>
+                        <option value="Placed">Placed</option>
+                        <option value="Preparing">Preparing</option>
+                        <option value="Ready">Ready</option>
+                        <option value="Delivered">Delivered</option>
+                    </select>
+                    <input type="text" id="orderSearchInput" placeholder="🔍 Search by name, phone, email...">
+                </div>
+                <div class="table-responsive">
+                    <div id="adminOrders"></div>
+                </div>
+            </div>
+
+            <!-- Bookings Management -->
+            <div class="admin-section glass">
+                <div class="section-header">
+                    <h3>🪑 Reservations Management</h3>
+                    <span class="section-badge" id="bookingsCount">0 bookings</span>
+                </div>
+                
+                    <div id="adminBookings"></div>
+                </div>
+                
+            </div>
+            <div class="admin-filters">
+                    <select id="bookingStatusFilter">
+                        <option value="all">All Statuses</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                    <input type="text" id="bookingSearchInput" placeholder="🔍 Search by name, phone, email...">
+                <div class="table-responsive">
+
+            <!-- ❌ DINE-IN QR CODES SECTION HIDDEN -->
+            <!-- 
+            <div class="admin-section glass">
+                <div class="section-header">
+                    <h3>📱 Dine-In QR Codes</h3>
+                    <span class="section-badge">12 Tables</span>
+                </div>
+                <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:15px;">
+                    Print these QR codes and place them on each table for direct ordering.
+                </p>
+                <div id="qrCodesGrid" class="qr-codes-grid"></div>
+            </div>
+            -->
+        </div>
+
+        <footer class="admin-footer">
+            <p>© 2026 Admin Dashboard • 3D Interface v5.0</p>
+        </footer>
+    </div>
+
+    <div id="toast-container"></div>
+    <div id="modal-container"></div>
+    <!-- Leaflet Map JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- QR Code JS -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+    <!-- Admin JS -->
+    <script src="admin.js"></script>
+
+</body>
+</html>
