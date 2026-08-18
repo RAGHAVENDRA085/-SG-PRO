@@ -1601,11 +1601,72 @@ function renderBookingsTable() {
 const container = document.getElementById("adminBookings");
 if (!container) return;
 
+const statusFilter = document.getElementById("bookingStatusFilter")?.value || "all";
+const dateFilter = document.getElementById("bookingDateFilter")?.value || "";
+const tableFilter = document.getElementById("bookingTableFilter")?.value || "all";
+const searchTerm = (document.getElementById("bookingSearchInput")?.value || "").trim().toLowerCase();
+
+let filteredBookings = bookings.slice().reverse();
+
+if (statusFilter !== "all") {
+    filteredBookings = filteredBookings.filter(b => b.status === statusFilter);
+}
+
+if (dateFilter) {
+    filteredBookings = filteredBookings.filter(b => b.date === dateFilter);
+}
+
+if (tableFilter !== "all") {
+    filteredBookings = filteredBookings.filter(b => String(b.tableNumber || "") === tableFilter);
+}
+
+if (searchTerm) {
+    filteredBookings = filteredBookings.filter(b => {
+        const tableDetails = getTableDetails(b.tableNumber);
+        const searchable = [
+            String(b.id || ""),
+            String(b.id || "").slice(-6),
+            `table ${b.tableNumber || ""}`,
+            `table #${b.tableNumber || ""}`,
+            `#${b.tableNumber || ""}`,
+            String(b.tableNumber || ""),
+            b.name || "",
+            b.phone || "",
+            b.email || "",
+            b.date || "",
+            b.time || "",
+            b.status || "",
+            tableDetails.tier || "",
+            String(b.guests || "")
+        ].join(" ").toLowerCase();
+        return searchable.includes(searchTerm);
+    });
+}
+
+const bookingsCountEl = document.getElementById("bookingsCount");
+if (bookingsCountEl) {
+    const isFiltered = statusFilter !== "all" || Boolean(dateFilter) || tableFilter !== "all" || Boolean(searchTerm);
+    bookingsCountEl.innerText = isFiltered
+        ? `${filteredBookings.length}/${bookings.length} bookings`
+        : `${bookings.length} bookings`;
+}
+
 if (bookings.length === 0) {
     container.innerHTML = `
         <div style="text-align:center; padding:40px; color:var(--text-secondary);">
             <div style="font-size:3rem; margin-bottom:10px;">🪑</div>
             <p>No bookings found</p>
+        </div>
+    `;
+    return;
+}
+
+if (filteredBookings.length === 0) {
+    container.innerHTML = `
+        <div style="text-align:center; padding:40px; color:var(--text-secondary);">
+            <div style="font-size:3rem; margin-bottom:10px;">🔎</div>
+            <p>No reservations match your search</p>
+            <small>Try table number, customer name, phone, email, date, or status.</small>
         </div>
     `;
     return;
@@ -1626,7 +1687,7 @@ container.innerHTML = `
             </tr>
         </thead>
         <tbody>
-            ${bookings.slice().reverse().map(b => {
+            ${filteredBookings.map(b => {
                 const tableDetails = getTableDetails(b.tableNumber);
 
                 let statusActions = "";
@@ -2233,6 +2294,16 @@ function initAdmin() {
     const orderSearchInput = document.getElementById("orderSearchInput");
     if (orderSearchInput) {
         orderSearchInput.addEventListener("input", renderOrdersTable);
+    }
+
+    const bookingStatusFilter = document.getElementById("bookingStatusFilter");
+    if (bookingStatusFilter) {
+        bookingStatusFilter.addEventListener("change", renderBookingsTable);
+    }
+
+    const bookingSearchInput = document.getElementById("bookingSearchInput");
+    if (bookingSearchInput) {
+        bookingSearchInput.addEventListener("input", renderBookingsTable);
     }
 
     const menuSearchAdmin = document.getElementById("menuSearchAdmin");
