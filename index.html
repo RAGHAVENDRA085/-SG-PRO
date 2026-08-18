@@ -142,6 +142,7 @@
 <a onclick="showPage('menuPage'); toggleMobileMenu()"><span>Menu</span></a>
 <a onclick="showPage('reservePage'); toggleMobileMenu()"><span>Reserve</span></a>
 <a onclick="showPage('galleryPage'); toggleMobileMenu()"><span>Gallery 📸</span></a>
+<a onclick="scrollToHomeSection('contactSection'); toggleMobileMenu()"><span>Contact</span></a>
 <a onclick="showPage('wishlistPage'); toggleMobileMenu()"><span>Wishlist</span></a>
 <a onclick="showPage('profilePage'); toggleMobileMenu()"><span>Profile 👤</span></a>
 <a onclick="toggleCart(); toggleMobileMenu()"><span>Cart (<span id="cartCount">0</span>)</span></a>
@@ -175,6 +176,16 @@
 <span class="title-line"><span class="highlight-word">Flavors</span><span class="title-accent">of India</span></span>
 </h1>
 <p class="hero-subtitle reveal-up">Authentic spices, fresh ingredients, unforgettable taste</p>
+<div class="hero-search reveal-up">
+<input id="heroDishSearch" type="text" placeholder="Search your favorite dish..." onkeydown="handleHeroSearch(event)">
+<button onclick="quickSearchDish()" class="hero-search-btn magnetic">Search Menu</button>
+</div>
+<div class="hero-quick-links reveal-up">
+<button class="quick-link-btn magnetic" onclick="scrollToHomeSection('featuresSection')">Why Us</button>
+<button class="quick-link-btn magnetic" onclick="scrollToHomeSection('reviewsSection')">Reviews</button>
+<button class="quick-link-btn magnetic" onclick="scrollToHomeSection('faqSection')">FAQ</button>
+<button class="quick-link-btn magnetic" onclick="scrollToHomeSection('contactSection')">Contact</button>
+</div>
 <div class="hero-buttons reveal-up">
 <button onclick="showPage('menuPage')" class="hero-btn primary magnetic"><span class="btn-text">View Menu</span><span class="btn-icon">🍽️</span><span class="btn-shine"></span></button>
 <button onclick="showPage('reservePage')" class="hero-btn secondary magnetic"><span class="btn-text">Book Table</span><span class="btn-icon">🪑</span><span class="btn-shine"></span></button>
@@ -251,7 +262,7 @@
 </div>
 
 <!-- FEATURES -->
-<div class="container features-section">
+<div class="container features-section" id="featuresSection">
 <h2 class="section-title reveal-up"><span class="title-text">Why Choose Spice Garden?</span></h2>
 <div class="features-grid">
 <div class="feature-card card-3d-hover reveal-up"><div class="card-border-glow"></div><div class="feature-icon">🚀</div><h3>Fast Delivery</h3><p>30-minute delivery guarantee</p><div class="card-shine"></div></div>
@@ -262,15 +273,77 @@
 </div>
 
 <!-- Reviews -->
-<div class="container reviews-section">
+<div class="container reviews-section" id="reviewsSection">
 <h2 class="section-title reveal-up"><span class="title-text">What Our Customers Say</span><span class="title-deco">💬</span></h2>
 <div class="reviews-grid" id="reviewsGrid"></div>
 </div>
 
 <!-- FAQ -->
-<div class="container faq-section">
+<div class="container faq-section" id="faqSection">
 <h2 class="section-title reveal-up"><span class="title-text">Frequently Asked Questions</span><span class="title-deco">❓</span></h2>
 <div class="faq-list" id="faqList"></div>
+</div>
+<div class="container contact-section" id="contactSection">
+<h2 class="section-title reveal-up"><span class="title-text">Contact Spice Garden</span><span class="title-deco">📞</span></h2>
+<div class="contact-grid">
+<div class="contact-info-card reveal-up">
+<div class="contact-intro">
+<span class="contact-eyebrow">We Reply Fast</span>
+<h3>Reserve, order, or ask us anything</h3>
+<p>Use the form or reach us directly for table bookings, catering requests, party planning, and delivery support.</p>
+</div>
+<div class="contact-points">
+<button class="contact-point" type="button" onclick="openPhone()">
+<span class="contact-point-icon">📞</span>
+<div>
+<strong>Call Us</strong>
+<p>+91 8500545520</p>
+</div>
+</button>
+<button class="contact-point" type="button" onclick="openWhatsApp()">
+<span class="contact-point-icon">💬</span>
+<div>
+<strong>WhatsApp Support</strong>
+<p>Quick help for orders and live updates</p>
+</div>
+</button>
+<button class="contact-point" type="button" onclick="openEmail()">
+<span class="contact-point-icon">✉️</span>
+<div>
+<strong>Email Us</strong>
+<p>support@spicegarden.com</p>
+</div>
+</button>
+</div>
+<div class="contact-meta">
+<div class="contact-meta-item">
+<span>Opening Hours</span>
+<strong>11:00 AM - 10:00 PM</strong>
+</div>
+<div class="contact-meta-item">
+<span>Service Area</span>
+<strong>Fast delivery across your city</strong>
+</div>
+</div>
+</div>
+<form class="contact-form reveal-up" onsubmit="submitContactForm(event)">
+<div class="contact-form-row">
+<input type="text" id="contactName" placeholder="Your Name *">
+<input type="email" id="contactEmail" placeholder="Your Email *">
+</div>
+<div class="contact-form-row">
+<input type="tel" id="contactPhone" placeholder="Phone Number" maxlength="10">
+<input type="text" id="contactSubject" placeholder="Subject *">
+</div>
+<textarea id="contactMessage" rows="6" placeholder="Tell us how we can help you... *"></textarea>
+<label class="contact-checkbox">
+<input type="checkbox" id="contactNewsletter">
+<span>Send me updates about offers and new dishes</span>
+</label>
+<button type="submit" class="hero-btn primary magnetic contact-submit-btn"><span class="btn-text">Send Message</span><span class="btn-icon">📨</span><span class="btn-shine"></span></button>
+<p id="contactFormMsg" class="contact-form-msg"></p>
+</form>
+</div>
 </div>
 </div>
 
@@ -320,6 +393,17 @@
 </select>
 <button onclick="resetFilters()" class="secondary-btn magnetic">Reset</button>
 </div>
+</div>
+
+<div class="smart-combos reveal-up">
+<div class="smart-combos-header">
+<div>
+<span class="combo-eyebrow">Chef-picked value meals</span>
+<h3>Smart Combos</h3>
+</div>
+<button onclick="renderSmartCombos()" class="secondary-btn magnetic">Refresh</button>
+</div>
+<div id="smartCombosGrid" class="smart-combos-grid"></div>
 </div>
 
 <div class="category-tabs">
@@ -804,30 +888,6 @@ document.querySelectorAll('.reveal-up').forEach(el => observer.observe(el));
         <button onclick="dismissPWA()" class="pwa-dismiss-btn">×</button>
     </div>
 </div>
-
- <!-- MENU IKADA KANIPISTUNDI -->
- <h2 style="text-align:center; color:white;">Spice Menu</h2>
- <div id="menu" style="padding:20px; color:white;"></div>
-
- <script>
-    fetch('http://localhost:3000/api/spices')
-     .then(res => res.json())
-    .then(data => {
-       console.log("Backend Data:", data);
-         const menuDiv = document.getElementById('menu');
-    data.forEach(item => {
-            menuDiv.innerHTML += `
-                 <div style="border:1px solid white; margin:10px; padding:10px;">
-                   <h3>${item.name}</h3>
-                    <p>Price: Rs.${item.price}</p>
-                 <p>Stock: ${item.stock}</p>
-                </div>
-            `;
-       });
-    })
-    .catch(err => console.log("Server off unda?", err));
- </script>
-
 
 </body>
 </html>
