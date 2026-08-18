@@ -60,6 +60,7 @@ let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
 let orders = JSON.parse(localStorage.getItem("orders")) || [];
 let users = JSON.parse(localStorage.getItem("users")) || [];
 let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+let contactMessages = JSON.parse(localStorage.getItem("contactMessages")) || [];
 let currentDiscount = 0;
 let currentCategory = 'all';
 let upiPaymentConfirmed = false;
@@ -175,6 +176,12 @@ const menuItems = [
     {id:49, name: "Paneer Tikka Kathi Roll", price:170, category: "roll", emoji: "🌯", chefId:2, isSpecial: true, dietary: "jain", spiceLevel: "medium"},
     {id:50, name: "Chicken Tikka Kathi Roll", price:190, category: "roll", emoji: "🌯", chefId:1, dietary: "jain", spiceLevel: "hot"},
     {id:51, name: "Spicy Egg Roll", price:150, category: "roll", emoji: "🌯", chefId:3, dietary: "jain", spiceLevel: "hot"}
+];
+
+const SMART_COMBOS = [
+    { id: 9001, name: "Royal Biryani Meal", itemIds: [11, 7, 24, 32], save: 70, badge: "Best Seller", note: "A full biryani plate with dal, dessert, and cooler." },
+    { id: 9002, name: "Veg Family Feast", itemIds: [2, 4, 37, 31], save: 90, badge: "Family", note: "Rich vegetarian mains plus pizza and fruit juice." },
+    { id: 9003, name: "Quick Bite Duo", itemIds: [42, 49, 28], save: 45, badge: "Snack", note: "A fast combo for evening cravings." }
 ];
 
 // ========== TOAST & MODAL ==========
@@ -696,6 +703,7 @@ function showPage(id) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (id === 'profilePage') updateProfileUI();
     if (id === 'reservePage') autoFillBookingDetails();
+    if (id === 'homePage') prefillContactForm();
 }
 
 function toggleMobileMenu() {
@@ -703,6 +711,102 @@ function toggleMobileMenu() {
 }
 
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+function scrollToHomeSection(id) {
+    showPage('homePage');
+    const nav = document.getElementById('mainNav');
+    if (nav) nav.classList.remove('active');
+    const section = document.getElementById(id);
+    if (!section) return;
+    setTimeout(() => {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+}
+
+function handleHeroSearch(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        quickSearchDish();
+    }
+}
+
+function quickSearchDish() {
+    const heroSearch = document.getElementById('heroDishSearch');
+    const menuSearch = document.getElementById('menuSearch');
+    const value = heroSearch ? heroSearch.value.trim() : '';
+
+    showPage('menuPage');
+    currentCategory = 'all';
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector('.tab-btn')?.classList.add('active');
+
+    if (menuSearch) menuSearch.value = value;
+    loadMenu();
+
+    if (value) showToast(`Showing dishes for "${value}"`, 'success');
+}
+
+function prefillContactForm() {
+    if (!currentUser) return;
+    const nameEl = document.getElementById('contactName');
+    const emailEl = document.getElementById('contactEmail');
+    const phoneEl = document.getElementById('contactPhone');
+    if (nameEl && !nameEl.value) nameEl.value = currentUser.name || '';
+    if (emailEl && !emailEl.value) emailEl.value = currentUser.email || '';
+    if (phoneEl && !phoneEl.value) phoneEl.value = currentUser.phone || '';
+}
+
+function submitContactForm(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('contactName')?.value.trim() || '';
+    const email = document.getElementById('contactEmail')?.value.trim() || '';
+    const phone = document.getElementById('contactPhone')?.value.trim() || '';
+    const subject = document.getElementById('contactSubject')?.value.trim() || '';
+    const message = document.getElementById('contactMessage')?.value.trim() || '';
+    const wantsNewsletter = document.getElementById('contactNewsletter')?.checked || false;
+    const msgEl = document.getElementById('contactFormMsg');
+
+    if (!name || !email || !subject || !message) {
+        if (msgEl) msgEl.textContent = 'Please fill all required contact fields.';
+        return showToast('Please fill all required contact fields', 'error');
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        if (msgEl) msgEl.textContent = 'Enter a valid email address.';
+        return showToast('Enter a valid email address', 'error');
+    }
+
+    if (phone && !/^\d{10}$/.test(phone)) {
+        if (msgEl) msgEl.textContent = 'Phone number must be 10 digits.';
+        return showToast('Phone number must be 10 digits', 'error');
+    }
+
+    contactMessages.unshift({
+        id: Date.now(),
+        userId: currentUser?.id || null,
+        name,
+        email,
+        phone,
+        subject,
+        message,
+        wantsNewsletter,
+        date: new Date().toISOString()
+    });
+    localStorage.setItem('contactMessages', JSON.stringify(contactMessages));
+
+    if (msgEl) msgEl.textContent = 'Thanks! Your message has been saved and we will reach out soon.';
+    document.getElementById('contactSubject').value = '';
+    document.getElementById('contactMessage').value = '';
+    document.getElementById('contactNewsletter').checked = false;
+    if (!currentUser) {
+        document.getElementById('contactName').value = '';
+        document.getElementById('contactEmail').value = '';
+        document.getElementById('contactPhone').value = '';
+    }
+
+    showToast('Your message has been sent successfully!', 'success');
+}
 
 // ========== VOICE SEARCH ==========
 function startVoiceSearch() {
@@ -863,7 +967,14 @@ function loadFAQ() {
     list.innerHTML = FAQS.map((f, i) => `<div class="faq-item" onclick="toggleFAQ(${i})"><div class="faq-question"><span>${f.q}</span><span class="faq-toggle">+</span></div><div class="faq-answer">${f.a}</div></div>`).join('');
 }
 
-function toggleFAQ(index) { document.querySelectorAll('.faq-item')[index].classList.toggle('active'); }
+function toggleFAQ(index) {
+    const items = document.querySelectorAll('.faq-item');
+    const target = items[index];
+    if (!target) return;
+    const willOpen = !target.classList.contains('active');
+    items.forEach(item => item.classList.remove('active'));
+    if (willOpen) target.classList.add('active');
+}
 
 // ========== LIVE LOCATION ==========
 function getLiveLocation() {
@@ -954,6 +1065,49 @@ function resetFilters() {
     loadMenu();
 }
 
+function getComboDetails(combo) {
+    const items = combo.itemIds.map(id => menuItems.find(item => item.id === id)).filter(Boolean);
+    const regularPrice = items.reduce((sum, item) => sum + item.price, 0);
+    return {
+        ...combo,
+        items,
+        regularPrice,
+        comboPrice: Math.max(0, regularPrice - combo.save)
+    };
+}
+
+function renderSmartCombos() {
+    const grid = document.getElementById('smartCombosGrid');
+    if (!grid) return;
+    
+    const combos = SMART_COMBOS.map(getComboDetails).filter(combo => combo.items.length > 0);
+    grid.innerHTML = combos.map(combo => {
+        const alreadyInCart = cart.some(item => item.id === combo.id);
+        const itemNames = combo.items.map(item => item.name).join(' + ');
+        const itemEmojis = combo.items.map(item => item.emoji).join('');
+        const disabled = !isRestaurantOpen();
+        return `
+            <div class="smart-combo-card">
+                <div class="combo-topline">
+                    <span class="combo-badge">${combo.badge}</span>
+                    <span class="combo-save">Save Rs.${combo.save}</span>
+                </div>
+                <div class="combo-visual">${itemEmojis}</div>
+                <h4>${combo.name}</h4>
+                <p class="combo-note">${combo.note}</p>
+                <p class="combo-items">${itemNames}</p>
+                <div class="combo-price-row">
+                    <span class="combo-old-price">Rs.${combo.regularPrice}</span>
+                    <strong>Rs.${combo.comboPrice}</strong>
+                </div>
+                <button onclick="addComboToCart(${combo.id})" class="magnetic" ${disabled ? 'disabled' : ''}>
+                    ${disabled ? 'Closed Now' : (alreadyInCart ? 'Add Another' : 'Add Combo')}
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
 function loadMenu() {
     const search = document.getElementById('menuSearch')?.value.trim().toLowerCase() || '';
     const priceFilter = document.getElementById('priceFilter')?.value || 'all';
@@ -1019,6 +1173,7 @@ function loadMenu() {
     };
     
     document.getElementById("menu").innerHTML = filtered.length === 0 ? '<p style="text-align:center; padding:40px; color:var(--text-secondary);">No items match your filters</p>' : filtered.map(makeCard).join("");
+    renderSmartCombos();
 }
 
 function getDietaryLabel(type) {
@@ -1043,6 +1198,38 @@ function addToCart(id) {
     if (existing) { existing.qty++; } else { cart.push({ ...item, qty: 1 }); }
     saveCart();
     showToast(`${item.name} added to cart!`, 'success');
+    loadMenu();
+}
+
+function addComboToCart(comboId) {
+    if (!isRestaurantOpen()) {
+        showToast("Restaurant is closed! We deliver from 11 AM to 10 PM only.", "error");
+        return;
+    }
+    
+    const combo = SMART_COMBOS.find(c => c.id === comboId);
+    if (!combo) return;
+    
+    const details = getComboDetails(combo);
+    const existing = cart.find(item => item.id === details.id);
+    const comboItem = {
+        id: details.id,
+        name: details.name,
+        price: details.comboPrice,
+        emoji: details.items.map(item => item.emoji).join(''),
+        category: 'combo',
+        qty: 1,
+        isCombo: true,
+        regularPrice: details.regularPrice,
+        savings: details.save,
+        comboItems: details.items.map(item => ({ id: item.id, name: item.name, price: item.price }))
+    };
+    
+    if (existing) existing.qty++;
+    else cart.push(comboItem);
+    
+    saveCart();
+    showToast(`${details.name} added. You saved Rs.${details.save}!`, 'success');
     loadMenu();
 }
 
@@ -1517,7 +1704,8 @@ function initPage() {
     if (toggleBtn) toggleBtn.innerText = savedTheme === 'light' ? '🌙' : '☀️';
     
     loadMenu(); loadChefs(); loadWishlist(); loadReviews(); loadFAQ(); loadTodaySpecial(); loadGallery(); 
-    initPromoCarousel(); loadWeatherRecommendation(); updateProfileUI(); saveCart();
+    initPromoCarousel(); loadWeatherRecommendation(); updateProfileUI(); prefillContactForm(); saveCart();
+    initNewFeatures();
     
     // 🆕 Show Open/Closed Banner
     updateRestaurantStatusBanner();
